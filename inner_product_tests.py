@@ -29,36 +29,30 @@ class InnerProductOpTest(unittest.TestCase):
     def test_innerProductGradientXHardCoded(self):
         x = tf.convert_to_tensor(np.asarray([1, 2]).astype(np.float32))
         W = tf.constant(np.asarray([[1, 2], [3, 4]]).astype(np.float32))
-        with tf.GradientTape() as g1, tf.GradientTape() as g2:
-            g1.watch(x)
-            g2.watch(x)            
-            
+        with tf.GradientTape(persistent=True) as g:
+            g.watch(x)            
             Wx_tf = tf.matmul(W, tf.reshape(x, [-1, 1]))
             Wx_inner_product = inner_product_module.inner_product(tf.reshape(x, [-1, 1]), W)                        
             
-            gradient_tf = g1.gradient(Wx_tf,x)
-            gradient_inner_product = g2.gradient(Wx_inner_product,x)
-            
-            self.assertEqual(gradient_tf[0].numpy(), gradient_inner_product[0].numpy())
-            self.assertEqual(gradient_tf[1].numpy(), gradient_inner_product[1].numpy())
+        gradient_tf = g.gradient(Wx_tf,x)
+        gradient_inner_product = g.gradient(Wx_inner_product,x)        
+        self.assertEqual(gradient_tf[0].numpy(), gradient_inner_product[0].numpy())
+        self.assertEqual(gradient_tf[1].numpy(), gradient_inner_product[1].numpy())
 
     def test_innerProductGradientWHardCoded(self):
         x = tf.constant(np.asarray([1, 2]).astype(np.float32))        
         W = tf.convert_to_tensor(np.asarray([[1, 2], [3, 4]]).astype(np.float32))
-        with tf.GradientTape() as g1, tf.GradientTape() as g2:
-            g1.watch(W)
-            g2.watch(W)            
-            
+        with tf.GradientTape(persistent=True) as g:
+            g.watch(W)            
             Wx_tf = tf.matmul(W, tf.reshape(x, [-1, 1]))
             Wx_inner_product = inner_product_module.inner_product(tf.reshape(x, [-1, 1]), W)
             
-            gradient_tf = g1.gradient(Wx_tf, W)
-            gradient_inner_product = g2.gradient(Wx_inner_product, W)
-                        
-            self.assertEqual(gradient_tf[0][0].numpy(), gradient_inner_product[0][0].numpy())
-            self.assertEqual(gradient_tf[0][1].numpy(), gradient_inner_product[0][1].numpy())
-            self.assertEqual(gradient_tf[1][0].numpy(), gradient_inner_product[1][0].numpy())
-            self.assertEqual(gradient_tf[1][1].numpy(), gradient_inner_product[1][1].numpy())
+        gradient_tf = g.gradient(Wx_tf, W)
+        gradient_inner_product = g.gradient(Wx_inner_product, W)                    
+        self.assertEqual(gradient_tf[0][0].numpy(), gradient_inner_product[0][0].numpy())
+        self.assertEqual(gradient_tf[0][1].numpy(), gradient_inner_product[0][1].numpy())
+        self.assertEqual(gradient_tf[1][0].numpy(), gradient_inner_product[1][0].numpy())
+        self.assertEqual(gradient_tf[1][1].numpy(), gradient_inner_product[1][1].numpy())
     
     def test_innerProductRandom(self):
         n = 4
@@ -80,17 +74,14 @@ class InnerProductOpTest(unittest.TestCase):
         for i in range(100):
             x = tf.convert_to_tensor(np.random.randint(10, size = (n)), dtype=tf.float32)
             W = tf.convert_to_tensor(np.random.randint(10, size = (m, n)), dtype=tf.float32)
-            with tf.GradientTape() as g1, tf.GradientTape() as g2:
-                g1.watch(x)
-                g2.watch(x)            
-            
+            with tf.GradientTape(persistent=True) as g:
+                g.watch(x)            
                 Wx_tf = tf.matmul(W, tf.reshape(x, [-1, 1]))
                 Wx_inner_product = inner_product_module.inner_product(tf.reshape(x, [-1, 1]), W)
 
-                gradient_tf = g1.gradient(Wx_tf, x)
-                gradient_inner_product = g2.gradient(Wx_inner_product, x)
-
-                np.testing.assert_array_equal(gradient_tf.numpy(), gradient_inner_product.numpy())
+            gradient_tf = g.gradient(Wx_tf, x)
+            gradient_inner_product = g.gradient(Wx_inner_product, x)
+            np.testing.assert_array_equal(gradient_tf.numpy(), gradient_inner_product.numpy())
                 
 
                 
